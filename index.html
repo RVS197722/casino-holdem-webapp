@@ -4,14 +4,53 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Casino Hold'em — ввод</title>
-
-  <!-- ВАЖНО: подключаем Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 12px; }
+    .row { margin: 10px 0; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    select, button { width: 100%; padding: 10px; font-size: 16px; }
+    .hint { font-size: 13px; opacity: 0.8; }
+    .error { color: #b00020; white-space: pre-line; }
+  </style>
 </head>
 <body>
   <h3>Ввод карт</h3>
 
-  <button id="send">Отправить тест</button>
+  <div class="row">
+    <label>Улица (этап)</label>
+    <select id="street">
+      <option value="flop">Флоп (3 общие карты)</option>
+      <option value="turn">Тёрн (4 общие карты)</option>
+      <option value="river">Ривер (5 общих карт)</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <label>Решение</label>
+    <select id="decision">
+      <option value="call">Колл</option>
+      <option value="fold">Фолд</option>
+    </select>
+    <div class="hint">Если твоя логика считает EV — это поле можно использовать как “что я собираюсь сделать”.</div>
+  </div>
+
+  <div class="row">
+    <b>Твои карты (2)</b>
+    <div class="grid" id="playerCards"></div>
+  </div>
+
+  <div class="row">
+    <b>Общие карты (до 5)</b>
+    <div class="grid" id="boardCards"></div>
+    <div class="hint">На флопе нужно 3, на тёрне 4, на ривере 5.</div>
+  </div>
+
+  <div class="row error" id="err"></div>
+
+  <div class="row">
+    <button id="send">Отправить</button>
+  </div>
 
   <script src="app.js"></script>
 </body>
