@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Casino Hold’em — Mini App</title>
+  <title>Casino Hold’em — ввод карт</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root{
@@ -37,32 +37,24 @@
     .primary{ background: var(--btn); border-color: transparent; color: var(--btnText); font-weight: 750; }
     .small{ font-size: 12px; color: var(--hint); margin-top: 10px; line-height: 1.35; }
     .toast{ display:none; margin-top:10px; padding:10px 12px; border-radius: 12px; background: rgba(255,255,255,.08); border: 1px solid var(--stroke); color: var(--text); font-size: 13px; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; color: var(--hint); word-break: break-all; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Casino Hold’em</h1>
     <div class="sub">
-      Порядок: <b>2 карты игрока</b>, затем <b>3 карты флопа</b>.
+      Бот работает только через Mini App.<br/>
+      Порядок: <b>2 карты игрока</b>, потом <b>3 карты флопа</b>.
     </div>
 
     <div class="panel">
-      <div class="gridActions">
-        <button class="primary" id="btnBuy">⭐ Оплатить подписку</button>
-        <button class="primary" id="btnStatus">📌 Статус подписки</button>
-      </div>
-
-      <div class="row" style="margin-top:10px;">
+      <div class="row" style="margin-top:0px;">
         <div class="pill">Шаг: <b id="stageText">карты игрока (0/2)</b></div>
         <div class="pill">Пример: <b>A♥ K♣ Q♦ J♠ 2♥</b></div>
       </div>
 
       <div class="label">Выбранные карты</div>
       <div class="cardsLine" id="cardsLine">—</div>
-
-      <div class="label">Результат</div>
-      <div class="cardsLine" id="resultLine">—</div>
 
       <div class="label">Номиналы (A…2)</div>
       <div class="grid" id="ranks"></div>
@@ -80,13 +72,16 @@
       <div class="toast" id="toast"></div>
 
       <div class="small">
-        “Одно устройство”: если откроете Mini App на другом устройстве — доступ будет заблокирован.<br/>
+        “Одно устройство”: если откроете Mini App на другом устройстве — подсказки будут заблокированы.<br/>
         Чтобы перенести доступ на это устройство — нажмите кнопку ниже.
       </div>
       <button class="primary" id="btnTakeover" style="width:100%; margin-top:10px;">Перенести доступ на это устройство</button>
 
-      <div class="label">Технически</div>
-      <div class="mono" id="techLine">API: —</div>
+      <!-- КНОПКИ ПОДПИСКИ ПЕРЕНЕСЕНЫ ВНИЗ (ВАРИАНТ A) -->
+      <div class="gridActions" style="margin-top:12px;">
+        <button class="primary" id="btnBuy">⭐ Оплатить подписку</button>
+        <button class="primary" id="btnStatus">📌 Статус подписки</button>
+      </div>
     </div>
   </div>
 
@@ -95,7 +90,7 @@
   if (tg) {
     tg.ready();
     tg.expand();
-    tg.enableClosingConfirmation();
+    tg.enableClosingConfirmation?.();
     if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
   }
 
@@ -124,15 +119,6 @@
     } catch { return ""; }
   })();
 
-  document.getElementById('techLine').textContent = "API: " + (apiBase || "— (нужно ?api=https%3A%2F%2F...)");
-
-  function setCardsText(txt){
-    document.getElementById('cardsLine').textContent = txt || "—";
-  }
-  function setResultText(txt){
-    document.getElementById('resultLine').textContent = txt || "—";
-  }
-
   async function apiPost(path, body){
     if (!apiBase) throw new Error("Не задан API. Добавьте ?api=https%3A%2F%2F... к WEBAPP_URL");
     if (!tg?.initData) throw new Error("Откройте Mini App через Telegram.");
@@ -148,11 +134,13 @@
     });
 
     const data = await res.json().catch(()=> ({}));
-    if (!res.ok) {
-      const msg = data?.error || data?.detail || ("HTTP " + res.status);
-      throw new Error(msg);
-    }
+    if (!res.ok) throw new Error(data?.error || ("HTTP " + res.status));
     return data;
+  }
+
+  function setResultText(txt){
+    const el = document.getElementById('cardsLine');
+    el.textContent = txt || "—";
   }
 
   async function bootstrap(){
@@ -172,10 +160,6 @@
   document.getElementById('btnStatus').onclick = async () => {
     try {
       const s = await apiPost("/api/status", {});
-      if (!s.device_ok) {
-        toast("⛔ Доступ привязан к другому устройству. Нажмите «Перенести доступ».");
-        return;
-      }
       if (s.sub_active) toast(`✅ Активна, осталось ~${s.left_hours} ч`);
       else toast(`❌ Не активна: ${s.price} ⭐️ / 30 дней`);
     } catch (e) { toast(String(e.message || e)); }
@@ -184,7 +168,7 @@
   document.getElementById('btnTakeover').onclick = async () => {
     try {
       const r = await apiPost("/api/takeover", {});
-      toast(r.moved ? "✅ Доступ перенесён на это устройство" : "✅ OK");
+      toast(r.moved ? "✅ Доступ перенесён на это устройство" : "OK");
     } catch (e) { toast(String(e.message || e)); }
   };
 
@@ -205,7 +189,6 @@
     } catch (e) { toast(String(e.message || e)); }
   };
 
-  // ====== Ввод карт ======
   const RANKS = ["A","K","Q","J","10","9","8","7","6","5","4","3","2"];
   const ranksBox = document.getElementById('ranks');
   let selectedRank = null;
@@ -218,7 +201,7 @@
 
   function render(){
     document.getElementById('stageText').textContent = stageLabel();
-    setCardsText(cards.length ? cards.join("  ") : "—");
+    setResultText(cards.length ? cards.join("  ") : "—");
     document.querySelectorAll('.rank').forEach(b=>{
       b.classList.toggle('selected', b.dataset.rank === selectedRank);
     });
@@ -247,21 +230,12 @@
       render();
 
       if (cards.length === 5){
-        setResultText("Считаю…");
         try {
           const r = await apiPost("/api/ev", { cards });
           toast(r.verdict);
-          setResultText(`${r.verdict}  |  EV(call)≈${Number(r.ev_call).toFixed(3)}  |  EV(fold)=${Number(r.ev_fold).toFixed(3)}`);
+          setResultText(`${cards.join("  ")}  |  ${r.verdict}  |  EV(call)≈${r.ev_call.toFixed(3)}`);
         } catch (e) {
-          const msg = String(e.message || e);
-          setResultText("—");
-          if (msg.includes("subscription_required") || msg.includes("402")) {
-            toast("❌ Нужна подписка. Нажмите «⭐ Оплатить подписку».");
-          } else if (msg.includes("device_mismatch") || msg.includes("403")) {
-            toast("⛔ Доступ привязан к другому устройству. Нажмите «Перенести доступ».");
-          } else {
-            toast(msg);
-          }
+          toast(String(e.message || e));
         }
       }
     };
@@ -271,14 +245,12 @@
     if (!cards.length) return;
     cards.pop();
     selectedRank = null;
-    setResultText("—");
     render();
   };
 
   document.getElementById('btnReset').onclick = ()=>{
     cards = [];
     selectedRank = null;
-    setResultText("—");
     render();
   };
 
