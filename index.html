@@ -1,35 +1,290 @@
-<!-- index.html -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Casino Hold'em — Mini App</title>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Casino Hold’em — Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
   <style>
-    body { font-family: Arial, sans-serif; padding: 12px; }
-    .top { display:flex; gap:10px; align-items:center; margin-bottom: 10px; }
-    .btn { width: 100%; padding: 12px; font-size: 16px; margin: 8px 0; }
-    .muted { opacity: .8; font-size: 13px; }
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    select { width: 100%; padding: 10px; font-size: 16px; }
-    .error { color: #b00020; white-space: pre-line; margin-top: 8px; }
-    .card { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-top: 10px; }
+    :root{
+      --bg: var(--tg-theme-bg-color, #0b0f14);
+      --text: var(--tg-theme-text-color, #e8eef7);
+      --hint: var(--tg-theme-hint-color, #9fb0c3);
+      --btn: var(--tg-theme-button-color, #2ea6ff);
+      --btnText: var(--tg-theme-button-text-color, #ffffff);
+      --card: rgba(255,255,255,.06);
+      --stroke: rgba(255,255,255,.10);
+      --good: rgba(46,166,255,.18);
+      --bad: rgba(255,80,80,.18);
+    }
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    .wrap{ max-width: 900px; margin: 0 auto; padding: 14px 14px 24px; }
+    h1{ font-size: 18px; margin: 6px 0 10px; font-weight: 650; }
+    .sub{ color: var(--hint); font-size: 13px; line-height: 1.35; margin-bottom: 12px; }
+    .panel{ background: var(--card); border: 1px solid var(--stroke); border-radius: 14px; padding: 12px; margin: 12px 0; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+    .pill{ background: rgba(255,255,255,.07); border: 1px solid var(--stroke); border-radius: 999px; padding: 8px 10px; font-size: 13px; color: var(--hint); display:flex; gap:8px; align-items:center; width: fit-content; }
+    .cardsLine{ font-size: 16px; letter-spacing: .3px; word-spacing: 6px; margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.18); border: 1px solid var(--stroke); }
+    .label{ font-size: 12px; color: var(--hint); margin-top: 10px; margin-bottom: 6px; }
+    .grid{ display:grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+    .grid2{ display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    .gridActions{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    button{ border: 1px solid var(--stroke); background: rgba(255,255,255,.06); color: var(--text); border-radius: 12px; padding: 11px 10px; font-size: 14px; font-weight: 650; cursor: pointer; user-select:none; }
+    button:active{ transform: translateY(1px); }
+    .rank.selected{ background: var(--good); border-color: rgba(46,166,255,.35); }
+    .suitBtn{ font-size: 16px; }
+    .danger{ background: var(--bad); border-color: rgba(255,80,80,.35); }
+    .primary{ background: var(--btn); border-color: transparent; color: var(--btnText); font-weight: 750; }
+    .small{ font-size: 12px; color: var(--hint); margin-top: 10px; line-height: 1.35; }
+    .toast{ display:none; margin-top:10px; padding:10px 12px; border-radius: 12px; background: rgba(255,255,255,.08); border: 1px solid var(--stroke); color: var(--text); font-size: 13px; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; color: var(--hint); word-break: break-all; }
   </style>
 </head>
 <body>
-  <div class="top">
-    <button id="back" class="btn" style="max-width:140px; display:none;">🔙 Назад</button>
-    <div>
-      <div id="title" style="font-weight:700;">Загрузка…</div>
-      <div id="subtitle" class="muted"></div>
+  <div class="wrap">
+    <h1>Casino Hold’em</h1>
+    <div class="sub">
+      Всё делаете <b>только здесь</b> — внутри Mini App.<br/>
+      Порядок: <b>2 карты игрока</b>, затем <b>3 карты флопа</b>.
+    </div>
+
+    <div class="panel">
+      <div class="gridActions">
+        <button class="primary" id="btnBuy">⭐ Оплатить подписку</button>
+        <button class="primary" id="btnStatus">📌 Статус подписки</button>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div class="pill">Шаг: <b id="stageText">карты игрока (0/2)</b></div>
+        <div class="pill">Пример: <b>A♥ K♣ Q♦ J♠ 2♥</b></div>
+      </div>
+
+      <div class="label">Выбранные карты</div>
+      <div class="cardsLine" id="cardsLine">—</div>
+
+      <div class="label">Результат</div>
+      <div class="cardsLine" id="resultLine">—</div>
+
+      <div class="label">Номиналы (A…2)</div>
+      <div class="grid" id="ranks"></div>
+
+      <div class="label">Масти (♥ ♣ ♦ ♠)</div>
+      <div class="grid2">
+        <button class="danger" id="btnDel">Удалить</button>
+        <button class="suitBtn" data-suit="♥">♥</button>
+        <button class="suitBtn" data-suit="♣">♣</button>
+        <button class="suitBtn" data-suit="♦">♦</button>
+        <button class="suitBtn" data-suit="♠">♠</button>
+        <button class="danger" id="btnReset" style="grid-column: 1 / span 5;">Сброс</button>
+      </div>
+
+      <div class="toast" id="toast"></div>
+
+      <div class="small">
+        “Одно устройство”: если откроете Mini App на другом устройстве — доступ будет заблокирован.<br/>
+        Чтобы перенести доступ на это устройство — нажмите кнопку ниже.
+      </div>
+      <button class="primary" id="btnTakeover" style="width:100%; margin-top:10px;">Перенести доступ на это устройство</button>
+
+      <div class="label">Технически</div>
+      <div class="mono" id="techLine">API: —</div>
     </div>
   </div>
 
-  <div id="app"></div>
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    tg.enableClosingConfirmation();
+    if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+  }
 
-  <script src="app.js"></script>
+  function toast(msg){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.display = 'block';
+    clearTimeout(window.__t);
+    window.__t = setTimeout(()=> el.style.display='none', 2600);
+  }
+
+  // device_id: уникален на устройство/браузер
+  const LS_KEY = "casino_holdem_device_id";
+  let deviceId = localStorage.getItem(LS_KEY);
+  if (!deviceId) {
+    deviceId = (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+"_"+Math.random()));
+    localStorage.setItem(LS_KEY, deviceId);
+  }
+
+  // API base из query ?api=...
+  const apiBase = (() => {
+    try {
+      const p = new URLSearchParams(location.search);
+      const v = p.get("api");
+      return (v || "").replace(/\/+$/,"");
+    } catch { return ""; }
+  })();
+
+  document.getElementById('techLine').textContent = "API: " + (apiBase || "— (нужно ?api=https%3A%2F%2F...)");
+
+  function setCardsText(txt){
+    document.getElementById('cardsLine').textContent = txt || "—";
+  }
+  function setResultText(txt){
+    document.getElementById('resultLine').textContent = txt || "—";
+  }
+
+  async function apiPost(path, body){
+    if (!apiBase) throw new Error("Не задан API. Добавьте ?api=https%3A%2F%2F... к WEBAPP_URL");
+    if (!tg?.initData) throw new Error("Откройте Mini App через Telegram.");
+
+    const res = await fetch(apiBase + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        initData: tg.initData,
+        device_id: deviceId,
+        ...body
+      })
+    });
+
+    const data = await res.json().catch(()=> ({}));
+    if (!res.ok) {
+      const msg = data?.error || data?.detail || ("HTTP " + res.status);
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  async function bootstrap(){
+    try {
+      const s = await apiPost("/api/bootstrap", {});
+      if (!s.device_ok) {
+        toast("⛔ Доступ привязан к другому устройству. Нажмите «Перенести доступ».");
+        return;
+      }
+      if (s.sub_active) toast("✅ Подписка активна");
+      else toast(`❌ Подписка не активна: ${s.price} ⭐️ / 30 дней`);
+    } catch (e) {
+      toast(String(e.message || e));
+    }
+  }
+
+  document.getElementById('btnStatus').onclick = async () => {
+    try {
+      const s = await apiPost("/api/status", {});
+      if (!s.device_ok) {
+        toast("⛔ Доступ привязан к другому устройству. Нажмите «Перенести доступ».");
+        return;
+      }
+      if (s.sub_active) toast(`✅ Активна, осталось ~${s.left_hours} ч`);
+      else toast(`❌ Не активна: ${s.price} ⭐️ / 30 дней`);
+    } catch (e) { toast(String(e.message || e)); }
+  };
+
+  document.getElementById('btnTakeover').onclick = async () => {
+    try {
+      const r = await apiPost("/api/takeover", {});
+      toast(r.moved ? "✅ Доступ перенесён на это устройство" : "✅ OK");
+    } catch (e) { toast(String(e.message || e)); }
+  };
+
+  document.getElementById('btnBuy').onclick = async () => {
+    try {
+      const r = await apiPost("/api/create_invoice", {});
+      if (!tg?.openInvoice) throw new Error("openInvoice не поддерживается этим клиентом Telegram");
+      tg.openInvoice(r.invoice_link, async (status) => {
+        if (status === "paid") {
+          toast("✅ Оплачено. Проверяю активацию...");
+          await bootstrap();
+        } else if (status === "cancelled") {
+          toast("Отменено");
+        } else {
+          toast("Ошибка оплаты: " + status);
+        }
+      });
+    } catch (e) { toast(String(e.message || e)); }
+  };
+
+  // ====== Ввод карт ======
+  const RANKS = ["A","K","Q","J","10","9","8","7","6","5","4","3","2"];
+  const ranksBox = document.getElementById('ranks');
+  let selectedRank = null;
+  let cards = [];
+
+  function stageLabel(){
+    if (cards.length < 2) return `карты игрока (${cards.length}/2)`;
+    return `флоп (${cards.length-2}/3)`;
+  }
+
+  function render(){
+    document.getElementById('stageText').textContent = stageLabel();
+    setCardsText(cards.length ? cards.join("  ") : "—");
+    document.querySelectorAll('.rank').forEach(b=>{
+      b.classList.toggle('selected', b.dataset.rank === selectedRank);
+    });
+  }
+
+  for (const r of RANKS){
+    const b = document.createElement('button');
+    b.textContent = r;
+    b.className = 'rank';
+    b.dataset.rank = r;
+    b.onclick = ()=>{ selectedRank = r; render(); };
+    ranksBox.appendChild(b);
+  }
+
+  document.querySelectorAll('button[data-suit]').forEach(b=>{
+    b.onclick = async ()=>{
+      const suit = b.dataset.suit;
+      if (!selectedRank) { toast("Сначала выберите номинал."); return; }
+      if (cards.length >= 5) { toast("Уже 5 карт."); selectedRank = null; render(); return; }
+
+      const card = `${selectedRank}${suit}`;
+      if (cards.includes(card)) { toast("Такая карта уже выбрана."); selectedRank = null; render(); return; }
+
+      cards.push(card);
+      selectedRank = null;
+      render();
+
+      if (cards.length === 5){
+        setResultText("Считаю…");
+        try {
+          const r = await apiPost("/api/ev", { cards });
+          toast(r.verdict);
+          setResultText(`${r.verdict}  |  EV(call)≈${Number(r.ev_call).toFixed(3)}  |  EV(fold)=${Number(r.ev_fold).toFixed(3)}`);
+        } catch (e) {
+          const msg = String(e.message || e);
+          setResultText("—");
+          if (msg.includes("subscription_required") || msg.includes("402")) {
+            toast("❌ Нужна подписка. Нажмите «⭐ Оплатить подписку».");
+          } else if (msg.includes("device_mismatch") || msg.includes("403")) {
+            toast("⛔ Доступ привязан к другому устройству. Нажмите «Перенести доступ».");
+          } else {
+            toast(msg);
+          }
+        }
+      }
+    };
+  });
+
+  document.getElementById('btnDel').onclick = ()=>{
+    if (!cards.length) return;
+    cards.pop();
+    selectedRank = null;
+    setResultText("—");
+    render();
+  };
+
+  document.getElementById('btnReset').onclick = ()=>{
+    cards = [];
+    selectedRank = null;
+    setResultText("—");
+    render();
+  };
+
+  render();
+  bootstrap();
+</script>
 </body>
 </html>
