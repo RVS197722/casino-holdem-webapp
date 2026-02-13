@@ -16,6 +16,8 @@
       --stroke: rgba(255,255,255,.10);
       --good: rgba(46,166,255,.18);
       --bad: rgba(255,80,80,.18);
+      --suitRed: #ff4d4d;
+      --suitBlack: var(--text);
     }
     body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
     .wrap{ max-width: 900px; margin: 0 auto; padding: 14px 14px 24px; }
@@ -26,15 +28,31 @@
     .pill{ background: rgba(255,255,255,.07); border: 1px solid var(--stroke); border-radius: 999px; padding: 8px 10px; font-size: 13px; color: var(--hint); display:flex; gap:8px; align-items:center; width: fit-content; }
     .cardsLine{ font-size: 16px; letter-spacing: .3px; word-spacing: 6px; margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.18); border: 1px solid var(--stroke); }
     .label{ font-size: 12px; color: var(--hint); margin-top: 10px; margin-bottom: 6px; }
+
     .grid{ display:grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
-    .grid2{ display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
     .gridActions{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+
+    /* Ряд мастей */
+    .gridSuits{ display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+
     button{ border: 1px solid var(--stroke); background: rgba(255,255,255,.06); color: var(--text); border-radius: 12px; padding: 11px 10px; font-size: 14px; font-weight: 650; cursor: pointer; user-select:none; }
     button:active{ transform: translateY(1px); }
+
     .rank.selected{ background: var(--good); border-color: rgba(46,166,255,.35); }
-    .suitBtn{ font-size: 16px; }
+
+    .suitBtn{ font-size: 18px; padding: 12px 10px; }
+    /* Цвет мастей */
+    button[data-suit="♥"], button[data-suit="♦"]{
+      color: var(--suitRed);
+      border-color: rgba(255,77,77,.35);
+    }
+    button[data-suit="♣"], button[data-suit="♠"]{
+      color: var(--suitBlack);
+    }
+
     .danger{ background: var(--bad); border-color: rgba(255,80,80,.35); }
     .primary{ background: var(--btn); border-color: transparent; color: var(--btnText); font-weight: 750; }
+
     .small{ font-size: 12px; color: var(--hint); margin-top: 10px; line-height: 1.35; }
     .toast{ display:none; margin-top:10px; padding:10px 12px; border-radius: 12px; background: rgba(255,255,255,.08); border: 1px solid var(--stroke); color: var(--text); font-size: 13px; }
   </style>
@@ -60,13 +78,17 @@
       <div class="grid" id="ranks"></div>
 
       <div class="label">Масти (♥ ♣ ♦ ♠)</div>
-      <div class="grid2">
-        <button class="danger" id="btnDel">Удалить</button>
+      <div class="gridSuits">
         <button class="suitBtn" data-suit="♥">♥</button>
         <button class="suitBtn" data-suit="♣">♣</button>
         <button class="suitBtn" data-suit="♦">♦</button>
         <button class="suitBtn" data-suit="♠">♠</button>
-        <button class="danger" id="btnReset" style="grid-column: 1 / span 5;">Сброс</button>
+      </div>
+
+      <!-- УДАЛИТЬ + СБРОС рядом, под мастями -->
+      <div class="gridActions" style="margin-top:8px;">
+        <button class="danger" id="btnDel">Удалить</button>
+        <button class="danger" id="btnReset">Сброс</button>
       </div>
 
       <div class="toast" id="toast"></div>
@@ -77,7 +99,7 @@
       </div>
       <button class="primary" id="btnTakeover" style="width:100%; margin-top:10px;">Перенести доступ на это устройство</button>
 
-      <!-- КНОПКИ ПОДПИСКИ ПЕРЕНЕСЕНЫ ВНИЗ (ВАРИАНТ A) -->
+      <!-- КНОПКИ ПОДПИСКИ ВНИЗУ ПАНЕЛИ (ВАРИАНТ A) -->
       <div class="gridActions" style="margin-top:12px;">
         <button class="primary" id="btnBuy">⭐ Оплатить подписку</button>
         <button class="primary" id="btnStatus">📌 Статус подписки</button>
@@ -102,7 +124,6 @@
     window.__t = setTimeout(()=> el.style.display='none', 2600);
   }
 
-  // device_id: уникален на устройство/браузер
   const LS_KEY = "casino_holdem_device_id";
   let deviceId = localStorage.getItem(LS_KEY);
   if (!deviceId) {
@@ -110,7 +131,6 @@
     localStorage.setItem(LS_KEY, deviceId);
   }
 
-  // API base из query ?api=...
   const apiBase = (() => {
     try {
       const p = new URLSearchParams(location.search);
