@@ -17,14 +17,14 @@
       --good: rgba(46,166,255,.18);
       --bad: rgba(255,80,80,.18);
 
-      --suitRed: #ff4d4d;
-      --suitBlack: #0a0a0a;
+      /* Светло-серые "клавиши" для мастей/номиналов */
+      --keyBg: rgba(255,255,255,.18);
+      --keyBgHover: rgba(255,255,255,.22);
+      --keyBorder: rgba(255,255,255,.22);
 
-      /* фон для “красных мастей” (тёмный) */
-      --suitDarkBg: rgba(0,0,0,.30);
-
-      /* фон для “чёрных мастей” (красный) */
-      --suitRedBg: #ff4d4d;
+      /* Цвет мастей */
+      --suitRed: #e53935;   /* красный */
+      --suitBlack: #0f0f10; /* чёрный (на светлом фоне видно) */
     }
 
     body{
@@ -33,6 +33,7 @@
       background: var(--bg);
       color: var(--text);
     }
+
     .wrap{ max-width: 900px; margin: 0 auto; padding: 14px 14px 24px; }
     h1{ font-size: 18px; margin: 6px 0 10px; font-weight: 650; }
     .sub{ color: var(--hint); font-size: 13px; line-height: 1.35; margin-bottom: 12px; }
@@ -44,6 +45,7 @@
       padding: 12px;
       margin: 12px 0;
     }
+
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
     .pill{
       background: rgba(255,255,255,.07);
@@ -57,6 +59,7 @@
       align-items:center;
       width: fit-content;
     }
+
     .cardsLine{
       font-size: 16px;
       letter-spacing: .3px;
@@ -67,26 +70,12 @@
       background: rgba(0,0,0,.18);
       border: 1px solid var(--stroke);
     }
+
     .label{ font-size: 12px; color: var(--hint); margin-top: 10px; margin-bottom: 6px; }
 
-    /* Номиналы: чуть крупнее и “кнопочнее” */
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: 8px;
-    }
-    .gridActions{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    /* Масти: отдельный ряд 4 кнопки */
-    .gridSuits{
-      display:grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-    }
+    .grid{ display:grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+    .gridActions{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .gridSuits{ display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 
     button{
       border: 1px solid var(--stroke);
@@ -101,43 +90,38 @@
     }
     button:active{ transform: translateY(1px); }
 
-    /* Номиналы — увеличим */
+    /* НОМИНАЛЫ — как кнопки, побольше и светло-серые */
     .rank{
-      padding: 13px 10px;
-      font-size: 15px;
-      font-weight: 750;
-      border-width: 1px;
+      background: var(--keyBg);
+      border-color: var(--keyBorder);
+      font-size: 16px;
+      padding: 14px 10px;
+      min-height: 54px;
     }
-    .rank.selected{
-      background: var(--good);
-      border-color: rgba(46,166,255,.35);
-    }
+    .rank:hover{ background: var(--keyBgHover); }
+    .rank.selected{ background: var(--good); border-color: rgba(46,166,255,.35); }
 
-    /* Масти — крупные, почти как кнопка */
+    /* МАСТИ — светло-серые кнопки + большие символы по центру */
     .suitBtn{
-      padding: 8px 6px;
-      font-size: 34px;     /* крупнее */
-      font-weight: 800;
-      line-height: 1;
+      background: var(--keyBg);
+      border-color: var(--keyBorder);
+      min-height: 64px;
+      padding: 0;
       display:flex;
       align-items:center;
       justify-content:center;
-      min-height: 54px;    /* чтобы визуально была “кнопка” */
-      border-width: 1px;
+      font-size: 40px;   /* крупно, почти "как кнопка" */
+      line-height: 1;
+      font-weight: 800;
     }
+    .suitBtn:hover{ background: var(--keyBgHover); }
 
-    /* ♥ ♦ : тёмный фон, красный символ */
+    /* Цвет мастей */
     button[data-suit="♥"], button[data-suit="♦"]{
-      background: var(--suitDarkBg);
-      border-color: rgba(255,77,77,.35);
       color: var(--suitRed);
-      text-shadow: 0 0 0 rgba(0,0,0,0); /* на всякий случай */
+      border-color: rgba(229,57,53,.35);
     }
-
-    /* ♣ ♠ : красный фон, чёрный символ */
     button[data-suit="♣"], button[data-suit="♠"]{
-      background: var(--suitRedBg);
-      border-color: rgba(255,77,77,.55);
       color: var(--suitBlack);
     }
 
@@ -178,14 +162,14 @@
 
       <div class="label">Масти (♥ ♣ ♦ ♠)</div>
       <div class="gridSuits">
-        <button class="suitBtn" data-suit="♥">♥</button>
-        <button class="suitBtn" data-suit="♣">♣</button>
-        <button class="suitBtn" data-suit="♦">♦</button>
-        <button class="suitBtn" data-suit="♠">♠</button>
+        <button class="suitBtn" data-suit="♥" aria-label="Червы">♥</button>
+        <button class="suitBtn" data-suit="♣" aria-label="Трефы">♣</button>
+        <button class="suitBtn" data-suit="♦" aria-label="Бубны">♦</button>
+        <button class="suitBtn" data-suit="♠" aria-label="Пики">♠</button>
       </div>
 
       <!-- УДАЛИТЬ + СБРОС рядом, под мастями -->
-      <div class="gridActions" style="margin-top:8px;">
+      <div class="gridActions" style="margin-top:10px;">
         <button class="danger" id="btnDel">Удалить</button>
         <button class="danger" id="btnReset">Сброс</button>
       </div>
