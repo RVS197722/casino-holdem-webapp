@@ -12,18 +12,22 @@
       --hint: var(--tg-theme-hint-color, #9fb0c3);
       --btn: var(--tg-theme-button-color, #2ea6ff);
       --btnText: var(--tg-theme-button-text-color, #ffffff);
+
       --card: rgba(255,255,255,.06);
       --stroke: rgba(255,255,255,.10);
       --good: rgba(46,166,255,.18);
       --bad: rgba(255,80,80,.18);
 
       --suitRed: #ff4d4d;
-      --suitBlack: var(--text);
 
-      /* Сделаем “кнопочность” мастей заметнее */
-      --suitBtnBg: rgba(255,255,255,.12);
-      --suitBtnStroke: rgba(255,255,255,.22);
-      --suitBtnBgActive: rgba(255,255,255,.18);
+      /* Заливки для кнопок мастей (видимые “как кнопки”) */
+      --suitRedBg: rgba(255, 77, 77, .18);
+      --suitBlackBg: rgba(255, 255, 255, .10);
+
+      /* Размеры кнопок */
+      --btnH: 54px;        /* общая высота кнопок */
+      --rankFont: 16px;    /* номиналы */
+      --suitFont: 34px;    /* масти (крупно, почти в размер кнопки) */
     }
 
     body{
@@ -32,6 +36,7 @@
       background: var(--bg);
       color: var(--text);
     }
+
     .wrap{ max-width: 900px; margin: 0 auto; padding: 14px 14px 24px; }
     h1{ font-size: 18px; margin: 6px 0 10px; font-weight: 650; }
     .sub{ color: var(--hint); font-size: 13px; line-height: 1.35; margin-bottom: 12px; }
@@ -69,10 +74,12 @@
       border: 1px solid var(--stroke);
     }
 
-    .label{ font-size: 12px; color: var(--hint); margin-top: 10px; margin-bottom: 6px; }
+    .label{ font-size: 12px; color: var(--hint); margin-top: 12px; margin-bottom: 6px; }
 
     .grid{ display:grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
     .gridActions{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+
+    /* 4 масти в ряд */
     .gridSuits{ display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 
     button{
@@ -80,47 +87,58 @@
       background: rgba(255,255,255,.06);
       color: var(--text);
       border-radius: 12px;
-      padding: 11px 10px;
+      padding: 12px 10px;
       font-size: 14px;
       font-weight: 650;
       cursor: pointer;
       user-select:none;
+      min-height: var(--btnH);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
     }
     button:active{ transform: translateY(1px); }
 
-    .rank.selected{ background: var(--good); border-color: rgba(46,166,255,.35); }
-
-    /* Кнопки мастей: крупный символ почти во всю кнопку + заметнее фон/рамка */
-    .suitBtn{
-      padding: 0;
-      min-height: 58px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      font-size: 40px;      /* ВОТ ЭТО главное — масть почти размером кнопки */
-      line-height: 1;
+    /* Номиналы — крупнее */
+    .rank{
+      font-size: var(--rankFont);
       font-weight: 800;
-
-      background: var(--suitBtnBg);
-      border: 1px solid var(--suitBtnStroke);
-      box-shadow: 0 1px 0 rgba(255,255,255,.06) inset;
+      letter-spacing: .3px;
+      background: rgba(255,255,255,.07);
     }
-    .suitBtn:active{
-      background: var(--suitBtnBgActive);
+    .rank.selected{
+      background: var(--good);
+      border-color: rgba(46,166,255,.35);
     }
 
-    /* Цвет мастей */
+    /* Масти — крупный символ почти на всю кнопку + цветная заливка */
+    .suitBtn{
+      font-size: var(--suitFont);
+      font-weight: 900;
+      line-height: 1;
+      padding: 0; /* чтобы символ занимал почти всю кнопку */
+      border-width: 1px;
+    }
+
+    /* ♥ ♦ — красные, с красной заливкой */
     button[data-suit="♥"], button[data-suit="♦"]{
       color: var(--suitRed);
+      background: var(--suitRedBg);
       border-color: rgba(255,77,77,.35);
+      text-shadow: 0 0 14px rgba(255,77,77,.12);
     }
+
+    /* ♣ ♠ — “чёрные” по смыслу, но контрастные (цвет текста темы) + нейтральная заливка */
     button[data-suit="♣"], button[data-suit="♠"]{
-      color: var(--suitBlack);
+      color: var(--text);
+      background: var(--suitBlackBg);
+      border-color: rgba(255,255,255,.18);
+      text-shadow: 0 0 14px rgba(255,255,255,.10);
     }
 
     .danger{ background: var(--bad); border-color: rgba(255,80,80,.35); }
-    .primary{ background: var(--btn); border-color: transparent; color: var(--btnText); font-weight: 750; }
+    .primary{ background: var(--btn); border-color: transparent; color: var(--btnText); font-weight: 800; }
 
     .small{ font-size: 12px; color: var(--hint); margin-top: 10px; line-height: 1.35; }
     .toast{
@@ -157,12 +175,13 @@
 
       <div class="label">Масти (♥ ♣ ♦ ♠)</div>
       <div class="gridSuits">
-        <button class="suitBtn" data-suit="♥" aria-label="Черви">♥</button>
-        <button class="suitBtn" data-suit="♣" aria-label="Трефы">♣</button>
-        <button class="suitBtn" data-suit="♦" aria-label="Бубны">♦</button>
-        <button class="suitBtn" data-suit="♠" aria-label="Пики">♠</button>
+        <button class="suitBtn" data-suit="♥">♥</button>
+        <button class="suitBtn" data-suit="♣">♣</button>
+        <button class="suitBtn" data-suit="♦">♦</button>
+        <button class="suitBtn" data-suit="♠">♠</button>
       </div>
 
+      <!-- УДАЛИТЬ + СБРОС рядом, под мастями -->
       <div class="gridActions" style="margin-top:8px;">
         <button class="danger" id="btnDel">Удалить</button>
         <button class="danger" id="btnReset">Сброс</button>
@@ -176,6 +195,7 @@
       </div>
       <button class="primary" id="btnTakeover" style="width:100%; margin-top:10px;">Перенести доступ на это устройство</button>
 
+      <!-- КНОПКИ ПОДПИСКИ ВНИЗУ ПАНЕЛИ (ВАРИАНТ A) -->
       <div class="gridActions" style="margin-top:12px;">
         <button class="primary" id="btnBuy">⭐ Оплатить подписку</button>
         <button class="primary" id="btnStatus">📌 Статус подписки</button>
