@@ -17,14 +17,13 @@
       --good: rgba(46,166,255,.18);
       --bad: rgba(255,80,80,.18);
 
-      /* Светло-серые "клавиши" для мастей/номиналов */
-      --keyBg: rgba(255,255,255,.18);
-      --keyBgHover: rgba(255,255,255,.22);
-      --keyBorder: rgba(255,255,255,.22);
+      /* Светлые "клавиши" */
+      --keyBg: rgba(255,255,255,.42);
+      --keyBgHover: rgba(255,255,255,.48);
+      --keyBorder: rgba(255,255,255,.28);
 
-      /* Цвет мастей */
-      --suitRed: #e53935;   /* красный */
-      --suitBlack: #0f0f10; /* чёрный (на светлом фоне видно) */
+      --suitRed: #e53935;
+      --suitBlack: #0f0f10;
     }
 
     body{
@@ -90,7 +89,6 @@
     }
     button:active{ transform: translateY(1px); }
 
-    /* НОМИНАЛЫ — как кнопки, побольше и светло-серые */
     .rank{
       background: var(--keyBg);
       border-color: var(--keyBorder);
@@ -101,7 +99,6 @@
     .rank:hover{ background: var(--keyBgHover); }
     .rank.selected{ background: var(--good); border-color: rgba(46,166,255,.35); }
 
-    /* МАСТИ — светло-серые кнопки + большие символы по центру */
     .suitBtn{
       background: var(--keyBg);
       border-color: var(--keyBorder);
@@ -110,13 +107,12 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      font-size: 40px;   /* крупно, почти "как кнопка" */
+      font-size: 40px;
       line-height: 1;
       font-weight: 800;
     }
     .suitBtn:hover{ background: var(--keyBgHover); }
 
-    /* Цвет мастей */
     button[data-suit="♥"], button[data-suit="♦"]{
       color: var(--suitRed);
       border-color: rgba(229,57,53,.35);
@@ -129,6 +125,7 @@
     .primary{ background: var(--btn); border-color: transparent; color: var(--btnText); font-weight: 750; }
 
     .small{ font-size: 12px; color: var(--hint); margin-top: 10px; line-height: 1.35; }
+
     .toast{
       display:none;
       margin-top:10px;
@@ -139,6 +136,13 @@
       color: var(--text);
       font-size: 13px;
     }
+
+    /* Видимое “заблокировано” */
+    .locked{
+      opacity: .55;
+      pointer-events: none;
+      filter: grayscale(0.2);
+    }
   </style>
 </head>
 <body>
@@ -148,7 +152,7 @@
       Порядок: <b>2 карты игрока</b>, потом <b>3 карты флопа</b>.
     </div>
 
-    <div class="panel">
+    <div class="panel" id="panel">
       <div class="row" style="margin-top:0px;">
         <div class="pill">Шаг: <b id="stageText">карты игрока (0/2)</b></div>
         <div class="pill">Пример: <b>A♥ K♣ Q♦ J♠ 2♥</b></div>
@@ -168,7 +172,6 @@
         <button class="suitBtn" data-suit="♠" aria-label="Пики">♠</button>
       </div>
 
-      <!-- УДАЛИТЬ + СБРОС рядом, под мастями -->
       <div class="gridActions" style="margin-top:10px;">
         <button class="danger" id="btnDel">Удалить</button>
         <button class="danger" id="btnReset">Сброс</button>
@@ -177,12 +180,10 @@
       <div class="toast" id="toast"></div>
 
       <div class="small">
-        “Одно устройство”: если откроете Mini App на другом устройстве — подсказки будут заблокированы.<br/>
-        Чтобы перенести доступ на это устройство — нажмите кнопку ниже.
+        Доступ привязывается к <b>первому устройству</b> и <b>не переносится</b>.<br/>
+        Если открыть Mini App на другом устройстве — он будет заблокирован.
       </div>
-      <button class="primary" id="btnTakeover" style="width:100%; margin-top:10px;">Перенести доступ на это устройство</button>
 
-      <!-- КНОПКИ ПОДПИСКИ ВНИЗУ ПАНЕЛИ (ВАРИАНТ A) -->
       <div class="gridActions" style="margin-top:12px;">
         <button class="primary" id="btnBuy">⭐ Оплатить подписку</button>
         <button class="primary" id="btnStatus">📌 Статус подписки</button>
@@ -205,6 +206,11 @@
     el.style.display = 'block';
     clearTimeout(window.__t);
     window.__t = setTimeout(()=> el.style.display='none', 2600);
+  }
+
+  const panel = document.getElementById("panel");
+  function lockUI(){
+    panel.classList.add("locked");
   }
 
   const LS_KEY = "casino_holdem_device_id";
@@ -250,7 +256,8 @@
     try {
       const s = await apiPost("/api/bootstrap", {});
       if (!s.device_ok) {
-        toast("⛔ Доступ привязан к другому устройству. Нажмите «Перенести доступ».");
+        toast("⛔ Доступ уже привязан к другому устройству. Использование запрещено.");
+        lockUI();
         return;
       }
       if (s.sub_active) toast("✅ Подписка активна");
@@ -263,21 +270,16 @@
   document.getElementById('btnStatus').onclick = async () => {
     try {
       const s = await apiPost("/api/status", {});
+      if (!s.device_ok) { toast("⛔ Доступ уже привязан к другому устройству. Использование запрещено."); lockUI(); return; }
       if (s.sub_active) toast(`✅ Активна, осталось ~${s.left_hours} ч`);
       else toast(`❌ Не активна: ${s.price} ⭐️ / 30 дней`);
-    } catch (e) { toast(String(e.message || e)); }
-  };
-
-  document.getElementById('btnTakeover').onclick = async () => {
-    try {
-      const r = await apiPost("/api/takeover", {});
-      toast(r.moved ? "✅ Доступ перенесён на это устройство" : "OK");
     } catch (e) { toast(String(e.message || e)); }
   };
 
   document.getElementById('btnBuy').onclick = async () => {
     try {
       const r = await apiPost("/api/create_invoice", {});
+      if (r.device_ok === false) { toast("⛔ Доступ уже привязан к другому устройству. Использование запрещено."); lockUI(); return; }
       if (!tg?.openInvoice) throw new Error("openInvoice не поддерживается этим клиентом Telegram");
       tg.openInvoice(r.invoice_link, async (status) => {
         if (status === "paid") {
@@ -335,6 +337,7 @@
       if (cards.length === 5){
         try {
           const r = await apiPost("/api/ev", { cards });
+          if (r.device_ok === false) { toast("⛔ Доступ уже привязан к другому устройству. Использование запрещено."); lockUI(); return; }
           toast(r.verdict);
           setResultText(`${cards.join("  ")}  |  ${r.verdict}  |  EV(call)≈${r.ev_call.toFixed(3)}`);
         } catch (e) {
