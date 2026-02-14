@@ -12,22 +12,19 @@
       --hint: var(--tg-theme-hint-color, #9fb0c3);
       --btn: var(--tg-theme-button-color, #2ea6ff);
       --btnText: var(--tg-theme-button-text-color, #ffffff);
-
       --card: rgba(255,255,255,.06);
       --stroke: rgba(255,255,255,.10);
       --good: rgba(46,166,255,.18);
       --bad: rgba(255,80,80,.18);
 
       --suitRed: #ff4d4d;
+      --suitBlack: #0a0a0a;
 
-      /* Заливки для кнопок мастей (видимые “как кнопки”) */
-      --suitRedBg: rgba(255, 77, 77, .18);
-      --suitBlackBg: rgba(255, 255, 255, .10);
+      /* фон для “красных мастей” (тёмный) */
+      --suitDarkBg: rgba(0,0,0,.30);
 
-      /* Размеры кнопок */
-      --btnH: 54px;        /* общая высота кнопок */
-      --rankFont: 16px;    /* номиналы */
-      --suitFont: 34px;    /* масти (крупно, почти в размер кнопки) */
+      /* фон для “чёрных мастей” (красный) */
+      --suitRedBg: #ff4d4d;
     }
 
     body{
@@ -36,7 +33,6 @@
       background: var(--bg);
       color: var(--text);
     }
-
     .wrap{ max-width: 900px; margin: 0 auto; padding: 14px 14px 24px; }
     h1{ font-size: 18px; margin: 6px 0 10px; font-weight: 650; }
     .sub{ color: var(--hint); font-size: 13px; line-height: 1.35; margin-bottom: 12px; }
@@ -48,7 +44,6 @@
       padding: 12px;
       margin: 12px 0;
     }
-
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
     .pill{
       background: rgba(255,255,255,.07);
@@ -62,7 +57,6 @@
       align-items:center;
       width: fit-content;
     }
-
     .cardsLine{
       font-size: 16px;
       letter-spacing: .3px;
@@ -73,72 +67,82 @@
       background: rgba(0,0,0,.18);
       border: 1px solid var(--stroke);
     }
+    .label{ font-size: 12px; color: var(--hint); margin-top: 10px; margin-bottom: 6px; }
 
-    .label{ font-size: 12px; color: var(--hint); margin-top: 12px; margin-bottom: 6px; }
+    /* Номиналы: чуть крупнее и “кнопочнее” */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .gridActions{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
 
-    .grid{ display:grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
-    .gridActions{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-
-    /* 4 масти в ряд */
-    .gridSuits{ display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    /* Масти: отдельный ряд 4 кнопки */
+    .gridSuits{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
 
     button{
       border: 1px solid var(--stroke);
       background: rgba(255,255,255,.06);
       color: var(--text);
       border-radius: 12px;
-      padding: 12px 10px;
+      padding: 11px 10px;
       font-size: 14px;
       font-weight: 650;
       cursor: pointer;
       user-select:none;
-      min-height: var(--btnH);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:6px;
     }
     button:active{ transform: translateY(1px); }
 
-    /* Номиналы — крупнее */
+    /* Номиналы — увеличим */
     .rank{
-      font-size: var(--rankFont);
-      font-weight: 800;
-      letter-spacing: .3px;
-      background: rgba(255,255,255,.07);
+      padding: 13px 10px;
+      font-size: 15px;
+      font-weight: 750;
+      border-width: 1px;
     }
     .rank.selected{
       background: var(--good);
       border-color: rgba(46,166,255,.35);
     }
 
-    /* Масти — крупный символ почти на всю кнопку + цветная заливка */
+    /* Масти — крупные, почти как кнопка */
     .suitBtn{
-      font-size: var(--suitFont);
-      font-weight: 900;
+      padding: 8px 6px;
+      font-size: 34px;     /* крупнее */
+      font-weight: 800;
       line-height: 1;
-      padding: 0; /* чтобы символ занимал почти всю кнопку */
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 54px;    /* чтобы визуально была “кнопка” */
       border-width: 1px;
     }
 
-    /* ♥ ♦ — красные, с красной заливкой */
+    /* ♥ ♦ : тёмный фон, красный символ */
     button[data-suit="♥"], button[data-suit="♦"]{
-      color: var(--suitRed);
-      background: var(--suitRedBg);
+      background: var(--suitDarkBg);
       border-color: rgba(255,77,77,.35);
-      text-shadow: 0 0 14px rgba(255,77,77,.12);
+      color: var(--suitRed);
+      text-shadow: 0 0 0 rgba(0,0,0,0); /* на всякий случай */
     }
 
-    /* ♣ ♠ — “чёрные” по смыслу, но контрастные (цвет текста темы) + нейтральная заливка */
+    /* ♣ ♠ : красный фон, чёрный символ */
     button[data-suit="♣"], button[data-suit="♠"]{
-      color: var(--text);
-      background: var(--suitBlackBg);
-      border-color: rgba(255,255,255,.18);
-      text-shadow: 0 0 14px rgba(255,255,255,.10);
+      background: var(--suitRedBg);
+      border-color: rgba(255,77,77,.55);
+      color: var(--suitBlack);
     }
 
     .danger{ background: var(--bad); border-color: rgba(255,80,80,.35); }
-    .primary{ background: var(--btn); border-color: transparent; color: var(--btnText); font-weight: 800; }
+    .primary{ background: var(--btn); border-color: transparent; color: var(--btnText); font-weight: 750; }
 
     .small{ font-size: 12px; color: var(--hint); margin-top: 10px; line-height: 1.35; }
     .toast{
@@ -157,7 +161,6 @@
   <div class="wrap">
     <h1>Casino Hold’em</h1>
     <div class="sub">
-      Бот работает только через Mini App.<br/>
       Порядок: <b>2 карты игрока</b>, потом <b>3 карты флопа</b>.
     </div>
 
